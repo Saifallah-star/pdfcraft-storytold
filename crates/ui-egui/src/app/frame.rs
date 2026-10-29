@@ -91,10 +91,6 @@ impl PdfCraftApp {
     }
 }
 
-/// At most this many detached document windows retain full render caches concurrently
-/// (view.multiple-windows), so aggregate texture memory remains bounded.
-const MAX_VISIBLE_DETACHED: usize = 8;
-
 impl PdfCraftApp {
     pub(crate) fn finish_render_frame(&mut self, ctx: &egui::Context) {
         self.finish_document_copy(ctx);
@@ -103,11 +99,9 @@ impl PdfCraftApp {
         // Retire hidden documents before admitting the visible documents' textures, so the
         // cache limits apply to the application, regardless of how many tabs are open.
         // Side by side: the comparison's old file renders alongside the active one.
-        // Multiple windows: detached tabs are drawn in their own viewports and treated as visible,
-        // up to an explicit multi-window budget (MAX_VISIBLE_DETACHED).
+        // Multiple windows: detached tabs are drawn in their own viewports and treated as visible.
         let partner = self.active.and_then(|i| compare_ui::side_by_side(self, i)).map(|(old, _)| old);
-        let detached: Vec<usize> =
-            self.views.iter().enumerate().filter_map(|(i, v)| if v.detached { Some(i) } else { None }).take(MAX_VISIBLE_DETACHED).collect();
+        let detached: Vec<usize> = self.views.iter().enumerate().filter_map(|(i, v)| if v.detached { Some(i) } else { None }).collect();
 
         for (i, view) in self.views.iter_mut().enumerate() {
             let is_visible = Some(i) == self.active || Some(i) == partner || detached.contains(&i);
