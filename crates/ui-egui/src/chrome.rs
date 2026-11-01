@@ -224,15 +224,20 @@ pub fn tab_strip(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
                                         }
                                     }
                                 } else {
-                                    let to = drop_index(&slots, from, pos.x);
+                                    let slot_to = drop_index(&slots, from, pos.x);
                                     if released {
                                         if close.is_none() && action.is_none() {
+                                            let to = if let Some(&(view_idx, _)) = slots.get(slot_to) {
+                                                view_idx
+                                            } else {
+                                                slots.last().map_or(app.views.len().saturating_sub(1), |&(last_idx, _)| last_idx)
+                                            };
                                             app.move_tab(from, to);
                                         }
                                     } else {
                                         drag_x = Some(pos.x);
                                         ui.ctx().set_cursor_icon(egui::CursorIcon::Grabbing);
-                                        if let Some(marker) = drop_marker(&slots, from, to, ui.spacing().item_spacing.x) {
+                                        if let Some(marker) = drop_marker(&slots, from, slot_to, ui.spacing().item_spacing.x) {
                                             let span = slots.first().map_or(ui.max_rect().y_range(), |(_, r)| r.y_range());
                                             // In front of the first tab the gap lies outside the scroll area's
                                             // clip rect (#2225): keep the whole line inside it.
