@@ -521,7 +521,9 @@ impl PdfCraftApp {
             Some(c)
         });
         if let Some(c) = blocked {
-            self.active = Some(i);
+            if !self.views.get(i).is_some_and(|v| v.detached) {
+                self.active = Some(i);
+            }
             self.notify(crate::content_ui::undrawable_message(c));
             return false;
         }
@@ -536,7 +538,9 @@ impl PdfCraftApp {
             if !typing {
                 return true;
             }
-            self.active = Some(i);
+            if !self.views.get(i).is_some_and(|v| v.detached) {
+                self.active = Some(i);
+            }
         }
         self.commit_form_typing() && self.commit_open_fill_text(id) && self.commit_open_text_edits(id)
     }

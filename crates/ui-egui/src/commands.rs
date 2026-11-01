@@ -783,7 +783,7 @@ impl PdfCraftApp {
         let current_target = if self.combine_showing() { Some(self.views.len()) } else { self.active };
         let current_pos = current_target.and_then(|t| cycle.iter().position(|&x| x == t));
         let Some(next_pos) = tab_after(current_pos, cycle.len(), forward) else { return };
-        let next = cycle[next_pos];
+        let Some(next) = cycle.get(next_pos).copied() else { return };
         if next < self.views.len() {
             self.active = Some(next);
         } else {

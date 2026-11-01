@@ -282,11 +282,11 @@ impl PdfCraftApp {
     /// Returns the index of the nearest docked (non-detached) view to `target`.
     /// Searches at or after `target` first, then before `target`.
     pub(crate) fn nearest_docked_tab(&self, target: usize) -> Option<usize> {
-        if let Some(idx) = (target..self.views.len()).find(|&i| !self.views[i].detached) {
+        if let Some(idx) = (target..self.views.len()).find(|&i| self.views.get(i).is_some_and(|v| !v.detached)) {
             return Some(idx);
         }
         let limit = target.min(self.views.len());
-        (0..limit).rfind(|&i| !self.views[i].detached)
+        (0..limit).rfind(|&i| self.views.get(i).is_some_and(|v| !v.detached))
     }
 
     /// Detaches a document tab into its own window (view.multiple-windows).
@@ -716,6 +716,18 @@ impl PdfCraftApp {
                             ui.label(egui::RichText::new(&title).font(theme::semibold(13.0)));
                             if is_dirty {
                                 ui.label(egui::RichText::new("(edited)").font(theme::regular(11.0)).color(t.text_muted));
+                            }
+                            if let (Some(view), Some(doc)) = (self.views.get(idx), self.session.get(doc_id)) {
+                                ui.label(
+                                    egui::RichText::new(format!(
+                                        "Page {} of {} • {:.0}%",
+                                        view.page.saturating_add(1),
+                                        doc.info.pages.len(),
+                                        view.zoom * 100.0,
+                                    ))
+                                    .font(theme::regular(11.0))
+                                    .color(t.text_muted),
+                                );
                             }
                             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                                 if ui.button(tl!("Re-attach Tab")).clicked() {
