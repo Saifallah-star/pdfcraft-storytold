@@ -169,9 +169,16 @@ pub fn tab_strip(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
                                         action = Some(crate::tab_context::Action::Close(id));
                                         ui.close();
                                     }
-                                    if ui.button(tl!("Move to New Window")).clicked() {
-                                        action = Some(crate::tab_context::Action::Detach(id));
-                                        ui.close();
+                                    #[cfg(not(target_arch = "wasm32"))]
+                                    {
+                                        let detach_btn = egui::Button::new(tl!("Move to New Window"));
+                                        let detach_response = ui
+                                            .add_enabled(app.views.len() > 1, detach_btn)
+                                            .on_disabled_hover_text(tl!("Cannot detach the only open document"));
+                                        if detach_response.clicked() {
+                                            action = Some(crate::tab_context::Action::Detach(id));
+                                            ui.close();
+                                        }
                                     }
                                     if ui.add_enabled(!app.closed_tabs.is_empty(), egui::Button::new(tl!("Reopen Closed Tab"))).clicked() {
                                         action = Some(crate::tab_context::Action::Reopen);
@@ -198,32 +205,38 @@ pub fn tab_strip(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
                             if let Some((from, released)) = dragged
                                 && let Some(pos) = ui.ctx().pointer_latest_pos()
                             {
-                                let strip_rect = ui.clip_rect();
-                                let is_tear_off = pos.y > strip_rect.bottom() + 15.0 || pos.y < strip_rect.top() - 15.0;
-                                if is_tear_off {
-                                    if released {
-                                        if close.is_none()
-                                            && action.is_none()
-                                            && let Some(view) = app.views.get(from)
-                                        {
-                                            action = Some(crate::tab_context::Action::Detach(view.id));
-                                        }
-                                    } else {
-                                        ui.ctx().set_cursor_icon(egui::CursorIcon::Grabbing);
-                                        if let Some(name) = crate::canvas::tab_label(app, from) {
-                                            let badge_rect = egui::Rect::from_min_size(pos + egui::vec2(12.0, 12.0), egui::vec2(130.0, 26.0));
-                                            ui.painter().rect_filled(badge_rect, 4.0, t.panel);
-                                            ui.painter().rect_stroke(badge_rect, 4.0, egui::Stroke::new(1.0, t.accent), egui::StrokeKind::Inside);
-                                            ui.painter().text(
-                                                badge_rect.center(),
-                                                egui::Align2::CENTER_CENTER,
-                                                name,
-                                                egui::FontId::proportional(12.0),
-                                                t.text,
-                                            );
+                                let mut handled_tear_off = false;
+                                #[cfg(not(target_arch = "wasm32"))]
+                                if app.views.len() > 1 {
+                                    let strip_rect = ui.clip_rect();
+                                    let is_tear_off = pos.y > strip_rect.bottom() + 15.0 || pos.y < strip_rect.top() - 15.0;
+                                    if is_tear_off {
+                                        handled_tear_off = true;
+                                        if released {
+                                            if close.is_none()
+                                                && action.is_none()
+                                                && let Some(view) = app.views.get(from)
+                                            {
+                                                action = Some(crate::tab_context::Action::Detach(view.id));
+                                            }
+                                        } else {
+                                            ui.ctx().set_cursor_icon(egui::CursorIcon::Grabbing);
+                                            if let Some(name) = crate::canvas::tab_label(app, from) {
+                                                let badge_rect = egui::Rect::from_min_size(pos + egui::vec2(12.0, 12.0), egui::vec2(130.0, 26.0));
+                                                ui.painter().rect_filled(badge_rect, 4.0, t.panel);
+                                                ui.painter().rect_stroke(badge_rect, 4.0, egui::Stroke::new(1.0, t.accent), egui::StrokeKind::Inside);
+                                                ui.painter().text(
+                                                    badge_rect.center(),
+                                                    egui::Align2::CENTER_CENTER,
+                                                    name,
+                                                    egui::FontId::proportional(12.0),
+                                                    t.text,
+                                                );
+                                            }
                                         }
                                     }
-                                } else {
+                                }
+                                if !handled_tear_off {
                                     let to = drop_index(&slots, from, pos.x);
                                     if released {
                                         if close.is_none() && action.is_none() {
