@@ -660,9 +660,19 @@ impl PdfCraftApp {
         self.session.close(id);
         self.active = match self.active {
             _ if self.views.is_empty() => None,
-            Some(a) if a > index => Some(a - 1),
-            Some(a) if a >= self.views.len() => Some(self.views.len() - 1),
-            other => other,
+            Some(a) if a > index => {
+                let candidate = a - 1;
+                if self.views.get(candidate).is_some_and(|v| !v.detached) { Some(candidate) } else { self.nearest_docked_tab(candidate) }
+            }
+            Some(a) if a < index => {
+                if self.views.get(a).is_some_and(|v| !v.detached) {
+                    Some(a)
+                } else {
+                    self.nearest_docked_tab(a)
+                }
+            }
+            Some(_) => self.nearest_docked_tab(index),
+            None => None,
         };
     }
 
