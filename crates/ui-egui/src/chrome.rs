@@ -234,6 +234,7 @@ pub fn tab_strip(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
                                                 );
                                             }
                                         }
+                                    }
                                 }
                                 if !handled_tear_off {
                                     let slot_to = drop_index(&slots, from, pos.x);
