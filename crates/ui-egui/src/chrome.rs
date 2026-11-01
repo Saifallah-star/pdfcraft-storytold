@@ -26,6 +26,7 @@ pub const MAC_CONTENT_LEFT: f32 = MAC_LIGHTS_LEFT + 2.0 * MAC_LIGHT_PITCH + MAC_
 const TAB_STRIP: f32 = 38.0;
 const TAB_HEIGHT: f32 = 30.0;
 const STRIP_BUTTON: f32 = 28.0;
+const TAB_TEAR_OFF_DISTANCE: f32 = 15.0;
 
 /// Draw the window's tab strip: home and open controls, shrinkable and scrollable document tabs with drag
 /// reordering, and platform window controls.
@@ -209,7 +210,8 @@ pub fn tab_strip(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
                                 #[cfg(not(target_arch = "wasm32"))]
                                 if app.views.len() > 1 {
                                     let strip_rect = ui.clip_rect();
-                                    let is_tear_off = pos.y > strip_rect.bottom() + 15.0 || pos.y < strip_rect.top() - 15.0;
+                                    let is_tear_off =
+                                        pos.y > strip_rect.bottom() + TAB_TEAR_OFF_DISTANCE || pos.y < strip_rect.top() - TAB_TEAR_OFF_DISTANCE;
                                     if is_tear_off {
                                         handled_tear_off = true;
                                         if released {
