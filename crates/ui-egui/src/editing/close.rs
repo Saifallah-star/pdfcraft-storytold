@@ -138,7 +138,7 @@ impl PdfCraftApp {
 
     /// Request a normal application exit, preserving every unsaved document until answered.
     /// Returns false while the existing save/discard/cancel prompt needs a decision.
-    pub(crate) fn request_quit(&mut self, ctx: &egui::Context) -> bool {
+    pub fn request_quit(&mut self, ctx: &egui::Context) -> bool {
         if self.first_dirty().is_some() {
             self.close_request = Some(CloseRequest::Quit);
             ctx.request_repaint();
